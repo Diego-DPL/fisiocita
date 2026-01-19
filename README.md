@@ -58,6 +58,8 @@ fisiocita/
 
 ## 🚀 Inicio Rápido
 
+> **👥 ¿Eres un colaborador nuevo?** Lee la [Guía de Configuración para Colaboradores](./SETUP-COLABORADOR.md) para una configuración paso a paso detallada.
+
 ### Backend
 
 ```bash
