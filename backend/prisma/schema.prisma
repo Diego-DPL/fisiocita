@@ -1,0 +1,336 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// ENUMS
+// =============================================
+
+enum UserRole {
+  ADMIN
+  PHYSIOTHERAPIST
+  PATIENT
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum ActivityType {
+  PILATES
+  YOGA
+  REHABILITATION
+  FUNCTIONAL_TRAINING
+  OTHER
+}
+
+enum ActivityDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// =============================================
+// CLINIC (Tenant)
+// =============================================
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  address   String?
+  city      String?
+  country   String?
+  timezone  String   @default("Europe/Madrid")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users              User[]
+  physiotherapists   Physiotherapist[]
+  patients           Patient[]
+  appointments       Appointment[]
+  activities         Activity[]
+  activitySchedules  ActivitySchedule[]
+  availabilities     Availability[]
+
+  @@map("clinics")
+}
+
+// =============================================
+// USERS & AUTHENTICATION
+// =============================================
+
+model User {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  email        String
+  password     String // Hashed
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  phone        String?
+  avatar       String?
+  role         UserRole
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime? @map("last_login")
+  refreshToken String?   @map("refresh_token") // Para JWT refresh
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  clinic          Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist Physiotherapist?
+  patient         Patient?
+
+  @@unique([clinicId, email])
+  @@index([clinicId, role])
+  @@map("users")
+}
+
+// =============================================
+// PHYSIOTHERAPIST
+// =============================================
+
+model Physiotherapist {
+  id                  String   @id @default(uuid())
+  clinicId            String   @map("clinic_id")
+  userId              String   @unique @map("user_id")
+  licenseNumber       String?  @map("license_number")
+  specialization      String?
+  bio                 String?
+  yearsOfExperience   Int?     @map("years_of_experience")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments        Appointment[]
+  activities          Activity[]
+  availabilities      Availability[]
+
+  @@index([clinicId, isActive])
+  @@map("physiotherapists")
+}
+
+// =============================================
+// PATIENT
+// =============================================
+
+model Patient {
+  id                String   @id @default(uuid())
+  clinicId          String   @map("clinic_id")
+  userId            String   @unique @map("user_id")
+  dateOfBirth       DateTime? @map("date_of_birth")
+  gender            String?
+  address           String?
+  emergencyContact  String?   @map("emergency_contact")
+  medicalHistory    String?   @map("medical_history")
+  notes             String?
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  clinic            Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments      Appointment[]
+  activityBookings  ActivityBooking[]
+
+  @@index([clinicId, isActive])
+  @@map("patients")
+}
+
+// =============================================
+// APPOINTMENTS (Citas individuales)
+// =============================================
+
+model Appointment {
+  id                  String            @id @default(uuid())
+  clinicId            String            @map("clinic_id")
+  patientId           String            @map("patient_id")
+  physiotherapistId   String            @map("physiotherapist_id")
+  startTime           DateTime          @map("start_time")
+  endTime             DateTime          @map("end_time")
+  status              AppointmentStatus @default(PENDING)
+  reason              String?
+  notes               String?
+  diagnosisNotes      String?           @map("diagnosis_notes")
+  treatmentNotes      String?           @map("treatment_notes")
+  cancelledAt         DateTime?         @map("cancelled_at")
+  cancelledBy         String?           @map("cancelled_by")
+  cancellationReason  String?           @map("cancellation_reason")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient             Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physiotherapist     Physiotherapist  @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, physiotherapistId, startTime])
+  @@index([clinicId, patientId])
+  @@index([clinicId, status])
+  @@map("appointments")
+}
+
+// =============================================
+// ACTIVITIES (Actividades grupales)
+// =============================================
+
+model Activity {
+  id                  String             @id @default(uuid())
+  clinicId            String             @map("clinic_id")
+  physiotherapistId   String             @map("physiotherapist_id")
+  name                String
+  description         String?
+  type                ActivityType
+  difficulty          ActivityDifficulty
+  maxParticipants     Int                @map("max_participants")
+  durationMinutes     Int                @map("duration_minutes") // Duración en minutos
+  price               Decimal?           @db.Decimal(10, 2)
+  imageUrl            String?            @map("image_url")
+  isActive            Boolean            @default(true) @map("is_active")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist     Physiotherapist    @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+  schedules           ActivitySchedule[]
+  bookings            ActivityBooking[]
+
+  @@index([clinicId, isActive])
+  @@index([clinicId, type])
+  @@map("activities")
+}
+
+// =============================================
+// ACTIVITY SCHEDULE (Horarios de actividades)
+// =============================================
+
+model ActivitySchedule {
+  id          String      @id @default(uuid())
+  clinicId    String      @map("clinic_id")
+  activityId  String      @map("activity_id")
+  dayOfWeek   DayOfWeek   @map("day_of_week")
+  startTime   String      @map("start_time") // Formato: "HH:MM"
+  endTime     String      @map("end_time")   // Formato: "HH:MM"
+  startDate   DateTime?   @map("start_date") // Inicio de validez del horario
+  endDate     DateTime?   @map("end_date")   // Fin de validez del horario
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  activity    Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, activityId])
+  @@map("activity_schedules")
+}
+
+// =============================================
+// ACTIVITY BOOKINGS (Reservas de actividades)
+// =============================================
+
+model ActivityBooking {
+  id              String        @id @default(uuid())
+  clinicId        String        @map("clinic_id")
+  activityId      String        @map("activity_id")
+  patientId       String        @map("patient_id")
+  sessionDate     DateTime      @map("session_date")
+  status          BookingStatus @default(PENDING)
+  notes           String?
+  cancelledAt     DateTime?     @map("cancelled_at")
+  cancelledBy     String?       @map("cancelled_by")
+  cancellationReason String?    @map("cancellation_reason")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  activity        Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  patient         Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, patientId, sessionDate])
+  @@index([clinicId, activityId, sessionDate])
+  @@index([clinicId, patientId])
+  @@map("activity_bookings")
+}
+
+// =============================================
+// AVAILABILITY (Disponibilidad de fisioterapeutas)
+// =============================================
+
+model Availability {
+  id                  String            @id @default(uuid())
+  clinicId            String            @map("clinic_id")
+  physiotherapistId   String            @map("physiotherapist_id")
+  dayOfWeek           DayOfWeek         @map("day_of_week")
+  startTime           String            @map("start_time") // Formato: "HH:MM"
+  endTime             String            @map("end_time")   // Formato: "HH:MM"
+  isAvailable         Boolean           @default(true) @map("is_available")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist     Physiotherapist   @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId, physiotherapistId])
+  @@map("availabilities")
+}
+
+// =============================================
+// AUDIT LOG (Para trazabilidad)
+// =============================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  clinicId    String?  @map("clinic_id")
+  userId      String?  @map("user_id")
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity      String   // appointment, activity, user, etc.
+  entityId    String?  @map("entity_id")
+  changes     Json?    // JSON con los cambios realizados
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([clinicId, entity, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
