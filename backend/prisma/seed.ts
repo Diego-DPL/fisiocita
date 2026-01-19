@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, ActivityType, ActivityDifficulty, DayOfWeek } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -35,7 +35,7 @@ async function main() {
       password: hashedPasswordAdmin,
       firstName: 'Admin',
       lastName: 'Sistema',
-      role: UserRole.ADMIN,
+      role: 'ADMIN',
       phone: '+34 600 000 001',
     },
   });
@@ -52,7 +52,7 @@ async function main() {
       password: hashedPasswordFisio,
       firstName: 'María',
       lastName: 'García',
-      role: UserRole.PHYSIOTHERAPIST,
+      role: 'PHYSIOTHERAPIST',
       phone: '+34 600 000 002',
     },
   });
@@ -77,7 +77,7 @@ async function main() {
       password: hashedPasswordFisio,
       firstName: 'Juan',
       lastName: 'López',
-      role: UserRole.PHYSIOTHERAPIST,
+      role: 'PHYSIOTHERAPIST',
       phone: '+34 600 000 003',
     },
   });
@@ -105,7 +105,7 @@ async function main() {
       password: hashedPasswordPatient,
       firstName: 'Carlos',
       lastName: 'Rodríguez',
-      role: UserRole.PATIENT,
+      role: 'PATIENT',
       phone: '+34 600 111 001',
     },
   });
@@ -129,7 +129,7 @@ async function main() {
       password: hashedPasswordPatient,
       firstName: 'Ana',
       lastName: 'Martínez',
-      role: UserRole.PATIENT,
+      role: 'PATIENT',
       phone: '+34 600 111 002',
     },
   });
@@ -148,7 +148,7 @@ async function main() {
   console.log('✅ Pacientes creados');
 
   // 5. Crear disponibilidad para fisioterapeutas
-  const workingDays = [DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY];
+  const workingDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 
   for (const day of workingDays) {
     // Fisio 1: Mañanas (09:00 - 14:00)
@@ -183,8 +183,8 @@ async function main() {
       physiotherapistId: fisio2.id,
       name: 'Pilates Terapéutico',
       description: 'Clase de pilates enfocada en la rehabilitación y fortalecimiento del core.',
-      type: ActivityType.PILATES,
-      difficulty: ActivityDifficulty.INTERMEDIATE,
+      type: 'PILATES',
+      difficulty: 'INTERMEDIATE',
       maxParticipants: 8,
       durationMinutes: 60,
       price: 15.00,
@@ -195,7 +195,7 @@ async function main() {
     data: {
       clinicId: clinic.id,
       activityId: pilatesActivity.id,
-      dayOfWeek: DayOfWeek.MONDAY,
+      dayOfWeek: 'MONDAY',
       startTime: '18:00',
       endTime: '19:00',
     },
@@ -205,7 +205,7 @@ async function main() {
     data: {
       clinicId: clinic.id,
       activityId: pilatesActivity.id,
-      dayOfWeek: DayOfWeek.WEDNESDAY,
+      dayOfWeek: 'WEDNESDAY',
       startTime: '18:00',
       endTime: '19:00',
     },
@@ -219,8 +219,8 @@ async function main() {
       physiotherapistId: fisio1.id,
       name: 'Yoga Restaurativo',
       description: 'Sesión de yoga suave para mejorar la flexibilidad y reducir el estrés.',
-      type: ActivityType.YOGA,
-      difficulty: ActivityDifficulty.BEGINNER,
+      type: 'YOGA',
+      difficulty: 'BEGINNER',
       maxParticipants: 10,
       durationMinutes: 60,
       price: 12.00,
@@ -231,7 +231,7 @@ async function main() {
     data: {
       clinicId: clinic.id,
       activityId: yogaActivity.id,
-      dayOfWeek: DayOfWeek.TUESDAY,
+      dayOfWeek: 'TUESDAY',
       startTime: '10:00',
       endTime: '11:00',
     },
@@ -241,7 +241,7 @@ async function main() {
     data: {
       clinicId: clinic.id,
       activityId: yogaActivity.id,
-      dayOfWeek: DayOfWeek.THURSDAY,
+      dayOfWeek: 'THURSDAY',
       startTime: '10:00',
       endTime: '11:00',
     },
