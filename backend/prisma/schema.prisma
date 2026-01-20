@@ -15,9 +15,10 @@ datasource db {
 // =============================================
 
 enum UserRole {
-  ADMIN
-  PHYSIOTHERAPIST
-  PATIENT
+  SUPER_ADMIN      // Administrador global - ve todas las clínicas
+  CLINIC_ADMIN     // Administrador de clínica - gestiona su clínica
+  PHYSIOTHERAPIST  // Fisioterapeuta - agenda individual
+  PATIENT          // Cliente/Paciente - reservas
 }
 
 enum AppointmentStatus {
@@ -50,6 +51,12 @@ enum BookingStatus {
   NO_SHOW
 }
 
+enum ClinicRequestStatus {
+  PENDING    // Solicitud enviada
+  APPROVED   // Aprobada por la clínica
+  REJECTED   // Rechazada
+}
+
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -78,13 +85,15 @@ model Clinic {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users              User[]
-  physiotherapists   Physiotherapist[]
-  patients           Patient[]
-  appointments       Appointment[]
-  activities         Activity[]
-  activitySchedules  ActivitySchedule[]
-  availabilities     Availability[]
+  users                     User[]
+  physiotherapists          Physiotherapist[]
+  patients                  Patient[]
+  appointments              Appointment[]
+  activities                Activity[]
+  activitySchedules         ActivitySchedule[]
+  availabilities            Availability[]
+  clinicRequests            ClinicRequest[]
+  physiotherapistActivities PhysiotherapistActivity[]
 
   @@map("clinics")
 }
@@ -113,6 +122,7 @@ model User {
   clinic          Clinic            @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   physiotherapist Physiotherapist?
   patient         Patient?
+  clinicRequests  ClinicRequest[]
 
   @@unique([clinicId, email])
   @@index([clinicId, role])
@@ -141,6 +151,8 @@ model Physiotherapist {
   appointments        Appointment[]
   activities          Activity[]
   availabilities      Availability[]
+  clinicRequests      ClinicRequest[]
+  assignedActivities  PhysiotherapistActivity[]
 
   @@index([clinicId, isActive])
   @@map("physiotherapists")
@@ -228,10 +240,11 @@ model Activity {
   updatedAt           DateTime           @updatedAt @map("updated_at")
 
   // Relations
-  clinic              Clinic             @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  physiotherapist     Physiotherapist    @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
-  schedules           ActivitySchedule[]
-  bookings            ActivityBooking[]
+  clinic                    Clinic                      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist           Physiotherapist             @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+  schedules                 ActivitySchedule[]
+  bookings                  ActivityBooking[]
+  assignedPhysiotherapists  PhysiotherapistActivity[]
 
   @@index([clinicId, isActive])
   @@index([clinicId, type])
@@ -312,6 +325,60 @@ model Availability {
 
   @@index([clinicId, physiotherapistId])
   @@map("availabilities")
+}
+
+// =============================================
+// CLINIC REQUESTS (Solicitudes de fisios a clínicas)
+// =============================================
+
+model ClinicRequest {
+  id                  String               @id @default(uuid())
+  clinicId            String               @map("clinic_id")
+  physiotherapistId   String               @map("physiotherapist_id")
+  userId              String               @map("user_id") // Usuario fisioterapeuta que solicita
+  status              ClinicRequestStatus  @default(PENDING)
+  message             String?              // Mensaje del fisio al solicitar
+  responseMessage     String?              @map("response_message") // Mensaje de la clínica al aprobar/rechazar
+  respondedBy         String?              @map("responded_by") // ID del admin que respondió
+  respondedAt         DateTime?            @map("responded_at")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic               @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist     Physiotherapist      @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, physiotherapistId])
+  @@index([clinicId, status])
+  @@index([physiotherapistId, status])
+  @@map("clinic_requests")
+}
+
+// =============================================
+// PHYSIOTHERAPIST ACTIVITIES (Asignación de fisios a actividades)
+// =============================================
+
+model PhysiotherapistActivity {
+  id                  String      @id @default(uuid())
+  clinicId            String      @map("clinic_id")
+  physiotherapistId   String      @map("physiotherapist_id")
+  activityId          String      @map("activity_id")
+  assignedBy          String      @map("assigned_by") // ID del admin que asignó
+  assignedAt          DateTime    @default(now()) @map("assigned_at")
+  isActive            Boolean     @default(true) @map("is_active")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  clinic              Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  physiotherapist     Physiotherapist @relation(fields: [physiotherapistId], references: [id], onDelete: Cascade)
+  activity            Activity        @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([physiotherapistId, activityId])
+  @@index([clinicId, isActive])
+  @@index([activityId, isActive])
+  @@map("physiotherapist_activities")
 }
 
 // =============================================

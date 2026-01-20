@@ -14,8 +14,8 @@ export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Listar todas las clínicas (solo ADMIN)' })
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Listar todas las clínicas (solo SUPER_ADMIN)' })
   findAll() {
     return this.clinicsService.findAll();
   }

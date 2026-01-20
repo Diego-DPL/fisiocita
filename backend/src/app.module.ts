@@ -17,6 +17,7 @@ import { PatientsModule } from './modules/patients/patients.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
+import { ClinicRequestsModule } from './modules/clinic-requests/clinic-requests.module';
 
 // App controller and service
 import { AppController } from './app.controller';
@@ -65,6 +66,7 @@ import { AppService } from './app.service';
     AppointmentsModule,
     ActivitiesModule,
     CalendarModule,
+    ClinicRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

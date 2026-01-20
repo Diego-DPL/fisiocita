@@ -35,7 +35,7 @@ async function main() {
       password: hashedPasswordAdmin,
       firstName: 'Admin',
       lastName: 'Sistema',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       phone: '+34 600 000 001',
     },
   });
@@ -148,7 +148,7 @@ async function main() {
   console.log('✅ Pacientes creados');
 
   // 5. Crear disponibilidad para fisioterapeutas
-  const workingDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+  const workingDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'] as const;
 
   for (const day of workingDays) {
     // Fisio 1: Mañanas (09:00 - 14:00)
@@ -156,7 +156,7 @@ async function main() {
       data: {
         clinicId: clinic.id,
         physiotherapistId: fisio1.id,
-        dayOfWeek: day,
+        dayOfWeek: day as any,
         startTime: '09:00',
         endTime: '14:00',
       },
@@ -167,7 +167,7 @@ async function main() {
       data: {
         clinicId: clinic.id,
         physiotherapistId: fisio2.id,
-        dayOfWeek: day,
+        dayOfWeek: day as any,
         startTime: '15:00',
         endTime: '20:00',
       },
