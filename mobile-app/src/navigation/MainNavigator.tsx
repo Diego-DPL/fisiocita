@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import HomeScreen from '../screens/main/HomeScreen';
+import DashboardScreen from '../screens/main/DashboardScreen';
 import CalendarScreen from '../screens/main/CalendarScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 
@@ -14,8 +14,8 @@ export default function MainNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: any;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
+          if (route.name === 'Dashboard') {
+            iconName = focused ? 'view-dashboard' : 'view-dashboard-outline';
           } else if (route.name === 'Calendar') {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Profile') {
@@ -24,13 +24,32 @@ export default function MainNavigator() {
 
           return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#2196F3',
+        tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Inicio' }} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Calendario' }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{
+          title: 'Inicio',
+          headerShown: false,
+        }}
+      />
+      <Tab.Screen 
+        name="Calendar" 
+        component={CalendarScreen}
+        options={{
+          title: 'Agenda',
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          title: 'Perfil',
+        }}
+      />
     </Tab.Navigator>
   );
 }

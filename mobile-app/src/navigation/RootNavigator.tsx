@@ -2,7 +2,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuthStore } from '../store/authStore';
 import AuthNavigator from './AuthNavigator';
-import MainNavigator from './MainNavigator';
+import AppNavigator from './AppNavigator';
 
 const Stack = createStackNavigator();
 
@@ -14,7 +14,7 @@ export default function RootNavigator() {
       {!isAuthenticated ? (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       ) : (
-        <Stack.Screen name="Main" component={MainNavigator} />
+        <Stack.Screen name="App" component={AppNavigator} />
       )}
     </Stack.Navigator>
   );

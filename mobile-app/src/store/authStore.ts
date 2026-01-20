@@ -1,14 +1,16 @@
 import { create } from 'zustand';
-import { authService } from '../services/authService';
+import { authService, LoginResponse } from '../services/authService';
 import { storage } from '../services/storage';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: string;
-  clinicId: string;
+  clinicId?: string;
+  phone?: string;
+  avatar?: string;
 }
 
 interface AuthState {
@@ -20,6 +22,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loadStoredAuth: () => Promise<void>;
+  updateUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -88,5 +91,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       console.error('Error al cargar autenticación:', error);
     }
+  },
+
+  updateUser: (user: User) => {
+    set({ user });
+    storage.setItem('user', JSON.stringify(user));
   },
 }));
